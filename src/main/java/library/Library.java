@@ -1,6 +1,10 @@
 package library;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /**
  * A library's items, members and loans.
@@ -21,12 +25,12 @@ public class Library {
         this.name = Objects.requireNonNull(name);
     }
 
-    public void addItem(LendingItem lendingItem) {
-        items.add(lendingItem);
+    public void addItem(LendingItem item) {
+        items.add(Objects.requireNonNull(item));
     }
 
     public void addMember(Member member) {
-        members.add(member);
+        members.add(Objects.requireNonNull(member));
     }
 
     /**

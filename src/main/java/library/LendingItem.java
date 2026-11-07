@@ -1,18 +1,22 @@
 package library;
 
+
+import library.enums.ItemStatus;
+import library.enums.ItemType;
+
 public class LendingItem {
     public String title;
-    public String type;   // "BOOK" or "AUDIO_KIT"
-    public String status; // "AVAILABLE" or "ON_LOAN"
+    public ItemType type;   
+    public ItemStatus status;
     public String currentBorrower;
     public int id;
     static int counter = 1;
 
-    public LendingItem(String title, String type) {
+    public LendingItem(String title, ItemType type) {
         this.id = counter;
         counter++;
         this.title = title;
         this.type = type;
-        this.status = "AVAILABLE";
+        this.status = ItemStatus.AVAILABLE;
     }
 }

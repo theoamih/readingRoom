@@ -1,6 +1,6 @@
 package library;
 
-class Loan {
+public class Loan {
     public int id;
     public String memberName;
     public String itemTitle;

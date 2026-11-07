@@ -1,10 +1,6 @@
 package library;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 /**
  * A library's items, members and loans.
@@ -18,7 +14,6 @@ public class Library {
     private final List<LendingItem> items = new ArrayList<>();
     private final List<Member> members = new ArrayList<>();
     private final List<Loan> loans = new ArrayList<>();
-
     private int nextLoanId = 1;
 
     public Library(String name) {
@@ -114,6 +109,20 @@ public class Library {
      */
     public List<Loan> getLoans() {
         return Collections.unmodifiableList(loans);
+    }
+
+    /**
+     * Lists what a member still has out, so a volunteer chasing a missing item
+     * doesn't have to read through the whole report.
+     *
+     * @param member the member to look up
+     * @return a read-only list of the member's active loans, oldest first
+     */
+    public List<Loan> activeLoansFor(Member member) {
+        return loans.stream()
+                .filter(Loan::isActive)
+                .filter(loan -> loan.getMember() == member)
+                .toList();
     }
 
     /**

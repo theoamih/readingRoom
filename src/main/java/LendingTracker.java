@@ -1,6 +1,7 @@
 // The Reading Room - community library lending tracker
 // Runs a sample afternoon of lending and prints the end-of-day report.
 
+import library.ItemAlreadyOnLoanException;
 import library.LendingItem;
 import library.Library;
 import library.Member;
@@ -28,7 +29,13 @@ public class LendingTracker {
         lib.borrow(ama, audioCourse);
         lib.returnItem(audioCourse);
 
-        lib.borrow(ama, novel);
+        // The novel is already out with Kofi, so this is now refused.
+        // We catch the exception here so the end-of-day report still prints.
+        try {
+            lib.borrow(ama, novel);
+        } catch (ItemAlreadyOnLoanException refused) {
+            System.out.println(refused.getMessage());
+        }
 
         lib.printReport();
     }

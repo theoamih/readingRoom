@@ -32,13 +32,21 @@ public class Library {
     /**
      * Lends an item to a member and prints a confirmation.
      *
-     * <p>As in the original program, the item
+     * <p>The check comes first, so a refused borrow changes nothing: no loan,
+     * no history entry and no used loan ID. As in the original program, the item
      * and member don't have to have been added to this library.
      *
      * @param member the member borrowing the item
      * @param item the item to lend
+     * @throws ItemAlreadyOnLoanException if the item is already out
      */
     public void borrow(Member member, LendingItem item) {
+        Optional<Member> holder = currentBorrower(item);
+
+        if (holder.isPresent()) {
+            throw new ItemAlreadyOnLoanException(item, holder.get());
+        }
+
         // The item's type decides the period, so Library needs no book or
         // audio-kit logic. A new item type doesn't change this method.
         int loanDays = item.getType().loanDaysFor(member.getKind());

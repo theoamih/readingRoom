@@ -1,21 +1,20 @@
 // The Reading Room - community library lending tracker
-// Original program, built by a volunteer. New volunteers are told not to touch it.
-// Run it first to see the sort of thing they are worried about, and look closely
-// at the items and active loans in the end-of-day report.
+// Runs a sample afternoon of lending and prints the end-of-day report.
 
-import library.Library;
 import library.LendingItem;
+import library.Library;
 import library.Member;
-import library.enums.ItemType;
 import library.enums.MemberKind;
+import library.itemtypes.AudioKit;
+import library.itemtypes.Book;
 
 public class LendingTracker {
 
     public static void main(String[] args) {
         Library lib = new Library("The Reading Room");
 
-        LendingItem novel = new LendingItem("Things Fall Apart", ItemType.BOOK);
-        LendingItem audioCourse = new LendingItem("French Audio Course", ItemType.AUDIO_KIT);
+        LendingItem novel = new LendingItem("Things Fall Apart", new Book());
+        LendingItem audioCourse = new LendingItem("French Audio Course", new AudioKit());
         lib.addItem(novel);
         lib.addItem(audioCourse);
 
@@ -29,8 +28,7 @@ public class LendingTracker {
         lib.borrow(ama, audioCourse);
         lib.returnItem(audioCourse);
 
-        // ... and the sort of thing that worries them:
-        lib.borrow(ama, novel); // the novel is already out with Kofi, but nothing stops this
+        lib.borrow(ama, novel);
 
         lib.printReport();
     }

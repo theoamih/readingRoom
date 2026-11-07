@@ -1,20 +1,24 @@
 package library;
 
-import library.enums.ItemStatus;
-import library.enums.ItemType;
-import library.enums.LoanStatus;
-import library.enums.MemberKind;
-
 import java.util.*;
 
+/**
+ * A library's items, members and loans.
+ *
+ * <p>Every loan is created and closed here, so this is where the rule that an
+ * item can only be on one loan at a time is enforced. See {@link Loan} for what
+ * stops other code getting around it.
+ */
 public class Library {
-    public String name;
-    public List<LendingItem> items = new ArrayList<>();
-    public List<Member> members = new ArrayList<>();
-    private List<Loan> loans = new ArrayList<>();
+    private final String name;
+    private final List<LendingItem> items = new ArrayList<>();
+    private final List<Member> members = new ArrayList<>();
+    private final List<Loan> loans = new ArrayList<>();
+
+    private int nextLoanId = 1;
 
     public Library(String name) {
-        this.name = name;
+        this.name = Objects.requireNonNull(name);
     }
 
     public void addItem(LendingItem lendingItem) {
@@ -25,57 +29,102 @@ public class Library {
         members.add(member);
     }
 
-    // Lend an item to a member. The loan period depends on the kind of item and member.
-    public void borrow(Member member, LendingItem lendingitem) {
-        int loanDays = 0;
-        if (lendingitem.type == ItemType.BOOK) {
-            loanDays = 14;
-            if (member.kind == MemberKind.STUDENT) {
-                loanDays = 28; // students get longer loans
-            }
-            lendingitem.status = ItemStatus.ON_LOAN;
-            lendingitem.currentBorrower = member.name;
-            System.out.println("Lent \"" + lendingitem.title + "\" to " + member.name + " for " + loanDays + " days");
-        } else if (lendingitem.type == ItemType.AUDIO_KIT) {
-            loanDays = 7;
-            if (member.kind == MemberKind.STUDENT) {
-                loanDays = 14; // students get longer loans
-            }
-            lendingitem.status = ItemStatus.ON_LOAN;
-            lendingitem.currentBorrower = member.name;
-            System.out.println("Lent \"" + lendingitem.title + "\" to " + member.name + " for " + loanDays + " days");
-        }
-        member.history.add("Borrowed " + lendingitem.title);
-        loans.add(new Loan(member.name, lendingitem.title, loanDays));
+    /**
+     * Lends an item to a member and prints a confirmation.
+     *
+     * <p>As in the original program, the item
+     * and member don't have to have been added to this library.
+     *
+     * @param member the member borrowing the item
+     * @param item the item to lend
+     */
+    public void borrow(Member member, LendingItem item) {
+        // The item's type decides the period, so Library needs no book or
+        // audio-kit logic. A new item type doesn't change this method.
+        int loanDays = item.getType().loanDaysFor(member.getKind());
+
+        loans.add(new Loan(nextLoanId, member, item, loanDays));
+        nextLoanId++;
+        member.recordBorrow(item);
+        System.out.println("Lent \"" + item.getTitle() + "\" to " + member.getName()
+                + " for " + loanDays + " days");
     }
 
-    public void returnItem(LendingItem lendingitem) {
-        lendingitem.status = ItemStatus.AVAILABLE;
-        lendingitem.currentBorrower = null;
-        for (Loan loan : loans) {
-            if (loan.itemTitle.equals(lendingitem.title) && loan.status == LoanStatus.ACTIVE) {
-                loan.status = LoanStatus.RETURNED;
-            }
-        }
-        System.out.println("Returned \"" + lendingitem.title + "\"");
+    /**
+     * Closes the item's active loan, if it has one, and prints a confirmation.
+     *
+     * <p>As in the original program, returning an item that isn't out still
+     * prints the confirmation.
+     *
+     * @param item the item being returned
+     */
+    public void returnItem(LendingItem item) {
+        findActiveLoan(item).ifPresent(Loan::markReturned);
+        System.out.println("Returned \"" + item.getTitle() + "\"");
     }
 
+    /**
+     * Finds who has an item. This is worked out from the loans each time rather
+     * than stored on the item, so the two can never disagree.
+     *
+     * @param item the item to look up
+     * @return the member who has the item, or empty if it isn't out
+     */
+    public Optional<Member> currentBorrower(LendingItem item) {
+        return findActiveLoan(item).map(Loan::getMember);
+    }
+
+    private Optional<Loan> findActiveLoan(LendingItem item) {
+        return loans.stream()
+                .filter(Loan::isActive)
+                .filter(loan -> loan.getItem() == item) // checking same object instead of title
+                .findFirst();
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    // The next three lists are read-only views. Calling add() or clear() on one
+    // throws an exception, so outside code can't change the library's records.
+    public List<LendingItem> getItems() {
+        return Collections.unmodifiableList(items);
+    }
+
+    public List<Member> getMembers() {
+        return Collections.unmodifiableList(members);
+    }
+
+    /**
+     * Returns every loan the library has made, including returned ones.
+     *
+     * @return a read-only view of the loans, oldest first
+     */
     public List<Loan> getLoans() {
-        return loans;
+        return Collections.unmodifiableList(loans);
     }
 
+    /**
+     * Prints the end-of-day report: every item with its status, then every active loan.
+     */
     public void printReport() {
         System.out.println();
         System.out.println("=== " + name + " - end of day ===");
         System.out.println("Items:");
-        for (LendingItem lendingItem : items) {
-            System.out.println("  \"" + lendingItem.title + "\" (" + lendingItem.type + "): " + lendingItem.status
-                    + (lendingItem.currentBorrower != null ? " - with " + lendingItem.currentBorrower : ""));
+
+        for (LendingItem item : items) {
+            String status = currentBorrower(item)
+                    .map(borrower -> "ON_LOAN - with " + borrower.getName())
+                    .orElse("AVAILABLE");
+            System.out.println("  \"" + item.getTitle() + "\" (" + item.getType().label() + "): " + status);
         }
+
         System.out.println("Active loans:");
+
         for (Loan loan : loans) {
-            if (loan.status == LoanStatus.ACTIVE) {
-                System.out.println("  Loan #" + loan.id + ": \"" + loan.itemTitle + "\" -> " + loan.memberName);
+            if (loan.isActive()) {
+                System.out.println("  Loan #" + loan.getId() + ": \"" + loan.getItem().getTitle()
+                        + "\" -> " + loan.getMember().getName());
             }
         }
     }

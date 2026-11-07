@@ -10,15 +10,11 @@ import library.enums.MemberKind;
  * A person who can borrow from the library.
  */
 public final class Member {
-    private static int nextId = 1;
-
-    private final int id;
     private final String name;
     private final MemberKind kind;
     private final List<String> history = new ArrayList<>();
 
     public Member(String name, MemberKind kind) {
-        this.id = nextId++;
         this.name = Objects.requireNonNull(name);
         this.kind = Objects.requireNonNull(kind);
     }
@@ -32,10 +28,6 @@ public final class Member {
      */
     void recordBorrow(LendingItem item) {
         history.add("Borrowed " + item.getTitle());
-    }
-
-    public int getId() {
-        return id;
     }
 
     public String getName() {

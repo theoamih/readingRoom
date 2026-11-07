@@ -24,6 +24,8 @@ javac -d target/classes -sourcepath src/main/java src/main/java/LendingTracker.j
 java -cp target/classes LendingTracker
 ```
 
+Maven finds the exec plugin on its own, so it isn't set up in `pom.xml`.
+
 To see the member lookup, run `MemberLookupDemo` the same way.
 
 ## Where things live
@@ -83,7 +85,7 @@ An enum holding the loan periods would be shorter and would work for books and a
 
 ### Refusing a loan throws an exception
 
-`borrow` could return `false`, but a caller could ignore that and carry on. The check runs before anything changes, so a refused borrow leaves no loan, no history entry and no used loan number. `main` catches the exception so the report still prints.
+`borrow` could return `false`, but a caller could ignore that and carry on. The check runs before anything changes, so a refused borrow leaves no loan, no history entry and no used loan number. `main` catches the exception, prints the reason, and the report still prints.
 
 ### Loan's constructor isn't public
 
@@ -99,17 +101,26 @@ This assumes e-loans follow the one-loan rule, because the brief states it for a
 
 ### What changed from the sketch
 
-- The sketch in `DIAGNOSIS.md` leaves out `ItemAlreadyOnLoanException`. I added it when I built the refusal.
+- The [sketch](ReadingDiagram.drawio.svg) leaves out `ItemAlreadyOnLoanException`. I added it when I built the refusal.
 - The classes are grouped into folders, which the sketch doesn't show.
 - `Library` has a few methods the sketch doesn't show, such as `currentBorrower` and `activeLoansFor`.
+- The sketch shows an `id` on `Member` and `LendingItem`. I removed both because nothing read them.
 
 ## Behaviour compared with the original
 
 `baseline-output.txt` is the original program's output, saved before any code changed. To compare, in PowerShell:
 
 ```powershell
-javac -d target/classes -sourcepath src/main/java src/main/java/LendingTracker.java
+javac -d target/classes -sourcepath src/main/java src/main/java/LendingTracker.java src/main/java/MemberLookupDemo.java
 java -cp target/classes LendingTracker | Out-File -Encoding ascii new-output.txt
+git diff --no-index baseline-output.txt new-output.txt
+```
+
+On Mac or Linux:
+
+```bash
+javac -d target/classes -sourcepath src/main/java src/main/java/LendingTracker.java src/main/java/MemberLookupDemo.java
+java -cp target/classes LendingTracker > new-output.txt
 git diff --no-index baseline-output.txt new-output.txt
 ```
 
@@ -128,6 +139,7 @@ These also behave differently, but the original program's `main` never reaches t
 - Unknown item types and member kinds no longer compile.
 - Returning one of two same-titled copies closes only that copy's loan.
 - Each `Library` numbers its own loans from 1.
+- `LendingItem` and `Member` no longer have IDs. Nothing read them.
 - Null names, titles, types, kinds, items and members are rejected straight away.
 
 These are kept the same as the original on purpose, because the brief only changes the one-loan rule:

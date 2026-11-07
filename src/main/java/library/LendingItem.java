@@ -10,20 +10,12 @@ import library.interfaces.ItemType;
  * out from the loans, so there's no second record to go wrong.
  */
 public final class LendingItem {
-    private static int nextId = 1;
-
-    private final int id;
     private final String title;
     private final ItemType type;
 
     public LendingItem(String title, ItemType type) {
-        this.id = nextId++;
         this.title = Objects.requireNonNull(title);
         this.type = Objects.requireNonNull(type);
-    }
-
-    public int getId() {
-        return id;
     }
 
     /**
